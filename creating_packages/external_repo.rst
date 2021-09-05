@@ -1,31 +1,28 @@
 .. _external_repo:
 
-Recipe and Sources in a Different Repo
-======================================
+Getting the package sources from another origin
+-----------------------------------------------
 
-In the previous section, we fetched the sources of our library from an external repository.
-It is a typical workflow for packaging third party libraries.
+The recipe ``source()`` is intended to implement functionality related to
+retrieving the source code necessary to build a package from source.
 
-There are two different ways to fetch the sources from an external repository:
-
-1. Using the ``source()`` method as we displayed in the previous section:
 
 .. code-block:: python
 
-    from conans import ConanFile, CMake, tools
+    from conans import ConanFile
 
     class HelloConan(ConanFile):
         ...
 
         def source(self):
-            self.run("git clone https://github.com/conan-io/hello.git")
+            self.run("git clone https://github.com/conan-io/hello.git src")
             ...
 
 You can also use the :ref:`tools.Git <tools_git>` class:
 
 .. code-block:: python
 
-    from conans import ConanFile, CMake, tools
+    from conans import ConanFile, tools
 
     class HelloConan(ConanFile):
         ...
@@ -35,27 +32,17 @@ You can also use the :ref:`tools.Git <tools_git>` class:
             git.clone("https://github.com/conan-io/hello.git", "master")
             ...
 
-2. Using the :ref:`scm attribute <scm_attribute>` of the ConanFile:
 
 .. warning::
 
-    This is an **experimental** feature subject to breaking changes in future releases.
+    The ``source()`` method must be independent of any setting, option and configuration.
+    It is intended to execute only once, for all different build configurations, so the
+    operations done in ``source()`` must be common to all different builds and configurations.
+    If you have something that is specific of one configuration, do that operation in the
+    ``build()`` method, not in ``source()``.
 
-.. code-block:: python
 
-    from conans import ConanFile, CMake, tools
+The ``source()`` method can be parameterized using the ``conandata.yml`` feature.
+This file is a yaml file that is automatically exported an
 
-    class HelloConan(ConanFile):
-         scm = {
-            "type": "git",
-            "subfolder": "hello",
-            "url": "https://github.com/conan-io/hello.git",
-            "revision": "master"
-         }
-        ...
-
-Conan will clone the ``scm url`` and will checkout the ``scm revision``. Head to :ref:`creating package documentation <scm_feature>` to know
-more details about SCM feature.
-
-The ``source()`` method will be called after the checkout process, so you can still use it to patch something or retrieve more sources, but
-it is not necessary in most cases.
+TODO CONANDATA:YML

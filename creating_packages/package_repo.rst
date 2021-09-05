@@ -1,14 +1,14 @@
 .. _package_repo:
 
-Recipe and Sources in the Same Repo
-===================================
 
-Sometimes it is more convenient to have the recipe and source code together in the same repository.
-This is true especially if you are developing and packaging your own library, and not one from a third-party.
+Package recipe in the source repo
+=================================
 
-There are two different approaches:
+For creating packages built from your own code, it is usually more convenient to have the ``conanfile.py`` in the same repository as
+the source code. There are two different approaches:
 
-- Using the :ref:`exports sources attribute <exports_sources_attribute>` of the conanfile to
+
+- Using the :ref:`exports sources attribute <exports_sources_attribute>` or method of the conanfile to
    export the source code together with the recipe. This way the recipe is self-contained and will
    not need to fetch the code from external origins when building from sources. It can be considered
    a "snapshot" of the source code.
@@ -16,195 +16,138 @@ There are two different approaches:
    commit of your repository automatically.
 
 
-Exporting the Sources with the Recipe: ``exports_sources``
-----------------------------------------------------------
+.. important::
 
-This could be an appropriate approach if we want the package recipe to live in the same repository
-as the source code it is packaging.
+    This is a **tutorial** section. You are encouraged to execute these commands.
+    For this concrete example, you will need **CMake** and **git** installed  in your path.
+    It is not strictly required by Conan to create packages, you can use
+    other build systems (as VS, Meson, Autotools and even your own) and SCM to do that, without any dependency
+    to CMake or git.
+    Some of the features used in this section are **experimental**, like ``CMakeToolchain`` or ``cmake_layout()``,
+    and they might change in future releases. There are other alternative tools that are stable, please check
+    the :ref:`reference section<references>` for more information.
 
-First, let's get the initial source code and create the basic package recipe:
+
+Exporting the source with the recipe
+------------------------------------
+
+This is the case that we have seen in the previous "Getting started" section.
+The local files and folders matching the patterns in ``exports_sources = "pattern1", "pattern2", ...`` are copied together with the ``conanfile.py``
+recipe to the Conan cache, becoming part of the recipe. The sources are captured, and whenever this package needs to be built from sources, it can
+use these sources, no extra work required.
+
+If the attribute is not enough, there is an alternative method, that is more
+powerful, in the previous example, the attribute can be replaced:
 
 .. code-block:: bash
 
-    $ conan new hello/0.1 -t -s
+    $ conan new hello/0.1 -m=cmake_lib
 
-A *src* folder will be created with the same "hello" source code as in the previous example. You
-can have a look at it and see that the code is straightforward.
-
-Now let's have a look at *conanfile.py*:
+Then replace the attribute with the following equivalent method:
 
 .. code-block:: python
 
-    from conans import ConanFile, CMake
+    # Remove the attribute
+    # exports_sources = "src/*"
 
-    class HelloConan(ConanFile):
-        name = "hello"
-        version = "0.1"
-        license = "<Put the package license here>"
-        url = "<Package recipe repository url here, for issues about the package>"
-        description = "<Description of hello here>"
-        settings = "os", "compiler", "build_type", "arch"
-        options = {"shared": [True, False]}
-        default_options = {"shared": False}
-        generators = "cmake"
-        exports_sources = "src/*"
+    def export_sources(self):
+        self.copy("*", src="src", dst="src")
 
-        def build(self):
-            cmake = CMake(self)
-            cmake.configure(source_folder="src")
-            cmake.build()
-
-            # Explicit way:
-            # self.run('cmake "%s/src" %s' % (self.source_folder, cmake.command_line))
-            # self.run("cmake --build . %s" % cmake.build_config)
-
-        def package(self):
-            self.copy("*.h", dst="include", src="src")
-            self.copy("*.lib", dst="lib", keep_path=False)
-            self.copy("*.dll", dst="bin", keep_path=False)
-            self.copy("*.dylib*", dst="lib", keep_path=False)
-            self.copy("*.so", dst="lib", keep_path=False)
-            self.copy("*.a", dst="lib", keep_path=False)
-
-        def package_info(self):
-            self.cpp_info.libs = ["hello"]
-
-There are two important changes:
-
-- Added the ``exports_sources`` field, indicating to Conan to copy all the files from the local *src*
-  folder into the package recipe.
-- Removed the ``source()`` method, since it is no longer necessary to retrieve external sources.
-
-Also, you can notice the two CMake lines:
-
-.. code-block:: cmake
-
-    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    conan_basic_setup()
-
-They are not added in the package recipe, as they can be directly added to the *src/CMakeLists.txt*
-file.
-
-And simply create the package for user and channel **demo/testing** as described previously:
+Finally, create the package to check that it keeps working:
 
 .. code-block:: bash
 
     $ conan create . demo/testing
+    hello/0.1@demo/testing: Calling export_sources()
+    hello/0.1@demo/testing export_sources() method: Copied 1 '.txt' file: CMakeLists.txt
+    hello/0.1@demo/testing export_sources() method: Copied 1 '.cpp' file: hello.cpp
+    hello/0.1@demo/testing export_sources() method: Copied 1 '.h' file: hello.h
     ...
-    hello/0.1@demo/testing test package: Running test()
-    Hello world Release!
+    hello/0.1: Hello World Release!
+
 
 .. _scm_feature:
 
-Capturing the Remote and Commit: ``scm``
-----------------------------------------
+Capturing the SCM repository remote and commit
+----------------------------------------------
 
-.. warning::
+If you want to avoid storing a copy of the source code inside the recipe, then
+the recipe needs to capture the necessary information from the current SCM
+repository in order to be able to automatically fetch the necessary source code
+if a package consumer wants to rebuild the package from source later.
+This capture can be done with the :ref:`scm attribute <scm_attribute>` feature. The recommended approach is to enable the capture of the SCM information in a
+*conandata.yml* file that will be automatically exported with the *conanfile.py*. This is going to be the behavior in Conan 2.0 and not
+using it is not stable. Please activate it with the following command (you
+can also define in the *conan.conf* file directly):
 
-    This is an **experimental** feature subject to breaking changes in future releases. Although this
-    is an experimental feature, the use of the feature using ``scm_to_conandata`` is considered
-    stable.
+.. code-block:: bash
 
-You can use the :ref:`scm attribute <scm_attribute>` with the ``url`` and ``revision`` field set to ``auto``.
-When you export the recipe (or when :command:`conan create` is called) the exported recipe will capture the
-remote and commit of the local repository:
+    $ conan config set general.scm_to_conandata=1
 
-.. code-block:: python
-   :emphasize-lines: 8-10
 
-    import os
-    from conans import ConanFile, CMake, tools
+Let's see how the ``scm`` feature works. First we will create a git repository, put our recipe
+there using this ``scm`` feature, clone it and create the package:
 
-    class HelloConan(ConanFile):
-        scm = {
-            "type": "git",  # Use "type": "svn", if local repo is managed using SVN
-            "subfolder": "hello",
-            "url": "auto",
-            "revision": "auto",
-            "password": os.environ.get("SECRET", None)
-        }
-        ...
+.. code-block:: bash
 
-You can commit and push the *conanfile.py* to your origin repository, which will always preserve the ``auto``
-values. When the file is exported to the Conan local cache (except you have uncommitted changes, read below),
-these data will be stored in the *conanfile.py* itself (Conan will modify the file) or in a special file
-:ref:`conandata_yml` that will be stored together with the recipe, depending on the value of the configuration
-parameter :ref:`scm_to_conandata<conan_conf>`.
+    $ mkdir repo && cd repo
+    $ conan new hello/0.1 -m=cmake_lib
 
- * If the ``scm_to_conandata`` is not activated (default behavior in Conan v1.x) Conan will store a modified
-   version of the *conanfile.py* with the values of the fields in plain text:
-
-   .. code-block:: python
-    :emphasize-lines: 8-10
-
-        import os
-        from conans import ConanFile, CMake, tools
-
-        class HelloConan(ConanFile):
-            scm = {
-                "type": "git",
-                "subfolder": "hello",
-                "url": "https://github.com/conan-io/hello.git",
-                "revision": "437676e15da7090a1368255097f51b1a470905a0",
-                "password": "MY_SECRET"
-            }
-            ...
-
-   So when you :ref:`upload the recipe <uploading_packages>` to a Conan remote, the recipe will contain
-   the "resolved" URL and commit.
-
- * If ``scm_to_conandata`` is activated, the value of these fields (except ``username`` and ``password``) will
-   be stored in the :ref:`conandata_yml` file that will be automatically exported with the recipe.
-
-Whichever option you choose, the data resolved will be asigned by Conan to the corresponding field when the recipe
-file is loaded, and they will be available for all the methods defined in the recipe. Also, if building the package
-from sources, Conan will fetch the code in the captured url/commit before running the method ``source()`` in the
-recipe (if defined).
-
-As SCM attributes are evaluated in the local directory context (see :ref:`scm attribute <scm_attribute>`),
-you can write more complex functions to retrieve the proper values, this source *conanfile.py* will
-be valid too:
+Replace the ``exports_sources`` attribute with the following:
 
 .. code-block:: python
-   :emphasize-lines: 7, 8
 
-    import os
-    from conans import ConanFile, CMake, tools
+    # Remove the attribute
+    # exports_sources = "src/*"
 
-    def get_remote_url():
-         """ Get remote url regardless of the cloned directory """
-         here = os.path.dirname(__file__)
-         svn = tools.SVN(here)
-         return svn.get_remote_url()
+    scm = {"type": "git",
+           "url": "auto",
+           "revision": "auto"}
 
-    class HelloConan(ConanFile):
-         scm = {
-            "type": "svn",
-            "subfolder": "hello",
-            "url": get_remote_url(),
-            "revision": "auto"
-         }
-        ...
+Now, lets initialize the git repository, with a .gitignore, in a *repo" folder
+emulating a Git server:
 
-.. tip::
+.. code-block:: bash
 
-   When doing a :command:`conan create` or :command:`conan export`, Conan will capture the sources of the local scm project folder in the local cache.
+    $ echo test_package/build >> .gitignore
+    $ git init .
+    $ git add .
+    $ git commit -m "initial commit"
+    $ cd ..
 
-   This allows building packages making changes to the source code without the need of committing them and pushing them to the remote
-   repository. This convenient to speed up the development of your packages when cloning from a local repository.
+We can clone now the repo, and create the package from sources, you should see at the beginning something like:
 
-   So, if you are using the ``scm`` feature, with some ``auto`` field for `url` and/or `revision` and you
-   have uncommitted changes in your repository a warning message will be printed:
+.. code-block:: bash
 
-   .. code-block:: bash
+    $ git clone repo hello
+    $ cd hello
+    $ conan create . demo/testing
+    hello/0.1@demo/testing: WARN: Repo origin looks like a local path: <yourpath>/repo
+    hello/0.1@demo/testing: Repo origin deduced by 'auto': <yourpath>/repo
+    hello/0.1@demo/testing: Revision deduced by 'auto': a1b4537314b70afc82d466bc3210e075911b4745
+    hello/0.1@demo/testing: SCM: Getting sources from folder: <yourpath>/hello
+    ...
+    hello/0.1: Hello World Release!
 
-     $ conan export . hello/0.1@demo/testing
 
-      hello/0.1@demo/testing: WARN: There are uncommitted changes, skipping the replacement of 'scm.url'
-      and 'scm.revision' auto fields. Use --ignore-dirty to force it.
-      The 'conan upload' command will prevent uploading recipes with 'auto' values in these fields.
+Now the package can be built from source even in other computer, as long as it has access to the
+remote git repository.
 
-   As the warning message explains, the ``auto`` fields won't be replaced unless you specify ``--ignore-dirty``,
-   and by default, the :command:`conan upload` will block the upload of the recipe. This prevents recipes
-   to be uploaded with incorrect scm values exported.
-   You can use :command:`conan upload --force` to force uploading the recipe with the ``auto`` values un-replaced.
+When doing a :command:`conan create` or :command:`conan export`, Conan will capture the sources of the local scm project folder in the local cache. This allows building packages making changes to the source code without the need of committing them and pushing them to the remote
+repository.
+
+So, if you are using the ``scm`` feature, with some ``auto`` field for `url` and/or `revision` and you
+have uncommitted changes in your repository (go and do a small change in the package *hello.cpp* file, for example) a warning message will be printed:
+
+.. code-block:: bash
+
+    $ conan create . demo/testing
+    hello/0.1@demo/testing: WARN: There are uncommitted changes,
+    skipping the replacement of 'scm.url' and 'scm.revision' auto fields.
+    Use --ignore-dirty to force it. The 'conan upload' command will
+    prevent uploading recipes with 'auto' values in these fields.
+
+As the warning message explains, the ``auto`` fields won't be replaced unless you specify ``--ignore-dirty``,
+and by default, the :command:`conan upload` will block the upload of the recipe. This prevents recipes
+to be uploaded with incorrect scm values exported.
+You can use :command:`conan upload --force` to force uploading the recipe with the ``auto`` values un-replaced.
