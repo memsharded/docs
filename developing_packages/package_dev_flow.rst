@@ -13,16 +13,69 @@ performs the following costly operations:
 
 But sometimes, especially with big libraries, while we are developing the recipe, **we cannot afford** to perform these operations every time.
 
-The following section describes the local development flow, based on the
-`Bincrafters community blog <https://bincrafters.github.io>`_.
-
-----
-
 The local workflow encourages users to perform trial-and-error in a local sub-directory relative to their recipe, much like how developers
 typically test building their projects with other build tools. The strategy is to test the *conanfile.py* methods individually during this
 phase.
 
-We will use this `conan flow example <https://github.com/memsharded/example_conan_flow>`_ to follow the steps in the order below.
+.. important::
+
+    This is a **tutorial** section. You are encouraged to execute these commands.
+    Some of the features used in this section are **experimental**, like ``layout()`` or ``CMakeToolchain``,
+    and they might change in future releases. Check the :ref:`reference section<references>` for more information.
+
+
+Let's see the development flow with an example. We will start by creating a project with:
+
+.. code-block:: bash
+
+    $ mkdir hello && cd hello
+    $ conan new hello/0.1 --template=cmake_lib
+
+
+conan install
+-------------
+
+This is nothing different than the normal ``conan install`` that we do when consuming Conan dependencies. This should be the first step
+in the process, as it generates the necessary files for the build
+
+.. code-block:: bash
+
+    $ conan install .
+
+Depending on the operating system, it will create a different folder with the generated files.
+
+
+conan build
+-----------
+
+In most scenarios, using the native build system would be the natural way to build from sources. In this example, it
+means doing ``cmake . -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake`` to generate the project, then calling ``make``
+or opening the IDE like Visual Studio to build.
+
+However, it is also possible to run the whole ``build()`` method with the ``conan build`` command. Executing:
+
+.. code-block:: bash
+
+    $ conan build .
+
+Will run the ``build()`` method, in this case, first running ``cmake.configure()`` configuring the project, then
+running ``cmake.build()`` to do the actual build from source.
+
+
+conan source
+------------
+
+The ``conan source`` command doesn't work yet with the new layout.
+
+conan package
+-------------
+The ``conan package`` command doesn't work yet with the new layout.
+
+conan export-pkg
+----------------
+The ``conan export-pkg`` command doesn't work yet with the new layout.
+
+
 
 conan source
 ^^^^^^^^^^^^
@@ -51,62 +104,6 @@ This method outputs the source files into the source-folder.
 Once you've got your source method right and it contains the files you expect, you can move on to testing the various attributes and methods
 related to downloading dependencies.
 
-conan install
-^^^^^^^^^^^^^
-
-Conan has multiple methods and attributes which relate to dependencies (all the ones with the word "require" in the name). The command
-:command:`conan install` activates all them.
-
-+---------------+--------------------+
-| Input folders | Output folders     |
-+===============+====================+
-| --            | ``install-folder`` |
-+---------------+--------------------+
-
-.. code-block:: bash
-
-    $ conan install . --install-folder=tmp/build [--profile XXXX]
-
-    PROJECT: Installing C:\Users\conan\example_conan_flow\conanfile.py
-    Requirements
-    Packages
-    ...
-
-This also generates the *conaninfo.txt* and *conanbuildinfo.xyz* files (extensions depends on the generator you've used) in the temp folder
-(``install-folder``), which will be needed for the next step. Once you've got this command working with no errors, you can move on to
-testing the ``build()`` method.
-
-conan build
-^^^^^^^^^^^
-
-The build method takes a path to a folder that has sources and also to the install folder to get the information of the settings and
-dependencies. It uses a path to a folder where it will perform the build. In this case, as we are including the *conanbuildinfo.cmake*
-file, we will use the folder from the install step.
-
-+--------------------+------------------+
-| Input folders      | Output folders   |
-+====================+==================+
-| ``source-folder``  | ``build-folder`` |
-|                    |                  |
-| ``install-folder`` |                  |
-+--------------------+------------------+
-
-.. code-block:: bash
-
-    $ conan build . --source-folder=tmp/source --build-folder=tmp/build
-
-    Project: Running build()
-    ...
-    Build succeeded.
-        0 Warning(s)
-        0 Error(s)
-
-    Time Elapsed 00:00:03.34
-
-Here we can avoid the repetition of ``--install-folder=tmp/build`` and it will be defaulted to the ``--build-folder`` value.
-
-This is pretty straightforward, but it does add a very helpful new shortcut for people who are packaging their own library. Now, developers
-can make changes in their normal source directory and just pass that path as the ``--source-folder``.
 
 conan package
 ^^^^^^^^^^^^^
@@ -219,6 +216,15 @@ As a summary, you could use the default folders and the flow would be as simple 
     ...
     hello/1.1@user/testing (test package): Running test()
     Hello World Release!
+
+
+
+
+
+
+
+
+
 
 conan create
 ^^^^^^^^^^^^
