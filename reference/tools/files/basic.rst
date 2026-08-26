@@ -19,6 +19,17 @@ Usage:
         copy(self, "*.lib", self.build_folder, os.path.join(self.package_folder, "lib"))
 
 
+Since Conan 2.32, the ``pattern`` argument also accepts a list or tuple of patterns. When a list
+is provided, the source folder is walked only once and every file matching any of the patterns
+is copied, which can be significantly faster than calling ``copy()`` several times for large trees:
+
+.. code-block:: python
+
+    def package(self):
+        copy(self, ["*.h", "*.hpp"], self.source_folder,
+             os.path.join(self.package_folder, "include"))
+
+
 .. note::
 
     The files that are **symlinks to files** or **symlinks to folders** with be treated like any other file, so they will only
@@ -101,6 +112,12 @@ Usage:
     from conan.tools.files import replace_in_file
 
     replace_in_file(self, os.path.join(self.source_folder, "folder", "file.txt"), "foo", "bar")
+
+Regular expressions and backreferences can be used by enabling ``regex``:
+
+.. code-block:: python
+
+    replace_in_file(self, "file.txt", r"version=(\d+)", r"version=v\1", regex=True)
 
 
 conan.tools.files.chmod()

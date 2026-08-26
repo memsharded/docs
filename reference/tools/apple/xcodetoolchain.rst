@@ -67,15 +67,20 @@ Those files are:
   variables with conditional logic depending on the build configuration, architecture and sdk set.
 - *conantoolchain.xcconfig*: aggregates all the *conantoolchain_<config>_<arch>.xcconfig*
   files for the different installed configurations.
-- *conan_global_flags.xcconfig*: this file will only be generated in case of any
-  configuration variables related to compiler or linker flags are set. Check :ref:`the
-  configuration section<xcodetoolchain_conf>` below for more details.
-
+- *conan_global_flags_<config>_<arch>.xcconfig*: declares ``GCC_PREPROCESSOR_DEFINITIONS``,
+  ``OTHER_CFLAGS``, ``OTHER_CPLUSPLUSFLAGS`` and ``OTHER_LDFLAGS`` variables with conditional
+  logic depending on the build configuration, architecture and sdk set. This file will only
+  be generated in case any configuration variables related to compiler or linker flags are
+  set. Check :ref:`the configuration section<xcodetoolchain_conf>` below for more details.
+- *conan_global_flags.xcconfig*: aggregates all the
+  *conan_global_flags_<config>_<arch>.xcconfig* files for the different installed
+  configurations (*since Conan 2.32*).
 
 Every invocation to ``conan install`` with different configuration will create a new
-*conantoolchain_<config>_<arch>.xcconfig* file that is aggregated in the
-*conantoolchain.xcconfig*, so you can have different configurations included in your Xcode
-project.
+*conantoolchain_<config>_<arch>.xcconfig* and, if any compiler or linker flags are set, a new
+*conan_global_flags_<config>_<arch>.xcconfig* file. Both are aggregated in
+*conantoolchain.xcconfig* and *conan_global_flags.xcconfig* respectively, so you can have
+different configurations included in your Xcode project.
 
 The XcodeToolchain files can declare the following Xcode build settings based on Conan settings values:
 
@@ -107,3 +112,21 @@ This toolchain is also affected by these **[conf]** variables:
 If you set any of these variables, the toolchain will use them to generate the
 ``conan_global_flags.xcconfig`` file that will be included from the ``conan_config.xcconfig``
 file.
+
+build_settings
+++++++++++++++
+
+The ``build_settings`` attribute lets a recipe set any Xcode build setting
+directly. Settings already covered by a **[conf]** variable, such as
+``OTHER_CFLAGS``, ``OTHER_CPLUSPLUSFLAGS``, ``OTHER_LDFLAGS`` and
+``GCC_PREPROCESSOR_DEFINITIONS``, should instead be set with the
+``tools.build:*`` variables from the :ref:`conf section<xcodetoolchain_conf>`
+above:
+
+.. code:: python
+
+    def generate(self):
+        tc = XcodeToolchain(self)
+        tc.build_settings["OTHER_SWIFT_FLAGS"] = "$(inherited) -cxx-interoperability-mode=default"
+        tc.build_settings["GCC_WARN_UNUSED_VARIABLE"] = "YES"
+        tc.generate()

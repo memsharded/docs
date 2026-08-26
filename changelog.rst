@@ -3,6 +3,87 @@ Changelog
 
 This page lists the changes made to Conan in each version, with links to each pull request for more details.
 
+2.31.2 (04-Aug-2026)
+--------------------
+
+- Bugfix: ``conan upload .. --dry-run -f=json > to_upload.json`` now allows round-trip for ``conan upload -l=to_upload.json`` without re-preparing the artifacts. `#20237 <https://github.com/conan-io/conan/pull/20237>`_
+
+2.31.1 (24-Jul-2026)
+--------------------
+
+- Fix: Fixed `replace_in_file()` raising a false "pattern not found" error when the replacement produced the same content as the original (no-op replace). `#20211 <https://github.com/conan-io/conan/pull/20211>`_
+
+2.31.0 (23-Jul-2026)
+--------------------
+
+- Feature: Get Workspace feature out of incubating. `#20202 <https://github.com/conan-io/conan/pull/20202>`_ . Docs `here <https://github.com/conan-io/docs/pull/4501>`__
+- Feature: `replace_in_file` now supports regex patterns. `#20194 <https://github.com/conan-io/conan/pull/20194>`_ . Docs `here <https://github.com/conan-io/docs/pull/4498>`__
+- Feature: Warn when `conan config install` is used after `conan config install-pkg`. `#20188 <https://github.com/conan-io/conan/pull/20188>`_ . Docs `here <https://github.com/conan-io/docs/pull/4493>`__
+- Feature: Support GCC 14.4 and 15.3 in ``settings.yml``. `#20184 <https://github.com/conan-io/conan/pull/20184>`_
+- Feature: Support intel-cc 2025.2, 2025.3 and 2026.1 in ``settings.yml``. `#20184 <https://github.com/conan-io/conan/pull/20184>`_
+- Feature: Change the ``Workspace`` approach to not process ``python_requires`` just to derive ``name/version``. Proposed a new ``get_ref(folder)`` method in the ``conanws.py`` file to be able to define versions dynamically. `#20176 <https://github.com/conan-io/conan/pull/20176>`_ . Docs `here <https://github.com/conan-io/docs/pull/4497>`__
+- Feature: Define new `cpp_info.ignored_requires` attribute to avoid downstream propagation of dependencies. `#20171 <https://github.com/conan-io/conan/pull/20171>`_ . Docs `here <https://github.com/conan-io/docs/pull/4496>`__
+- Feature: Add `NO_SONAME` support to `CMakeConfigDeps` to skip SONAME generation. `#20168 <https://github.com/conan-io/conan/pull/20168>`_ . Docs `here <https://github.com/conan-io/docs/pull/4492>`__
+- Feature: Assert invalid parameters in `ConanFile.run()` method. `#20156 <https://github.com/conan-io/conan/pull/20156>`_
+- Feature: Add `.tar.zst` (Zstandard) archive support to the `unzip()` tool function. `#20140 <https://github.com/conan-io/conan/pull/20140>`_
+- Feature: Reduce verbose terminal output produced during the `package()` step. `#20134 <https://github.com/conan-io/conan/pull/20134>`_
+- Feature: Add `tools.build:asmflags` config and `CMakeToolchain.extra_asmflags` to populate `CMAKE_ASM_FLAGS`. `#20127 <https://github.com/conan-io/conan/pull/20127>`_
+- Feature: Add ``micro`` modes to ``package_id_modes`` to model changes over MAJOR.MINOR.PATCH.MICRO ``micro`` digit. `#20102 <https://github.com/conan-io/conan/pull/20102>`_ . Docs `here <https://github.com/conan-io/docs/pull/4491>`__
+- Feature: New ``win_runtime_copy`` capability of ``VirtualRunEnv``, so it can copy on Windows the runtime files of dependencies (the ``cpp_info.bindirs`` directories contents) to a single location and point to it, avoiding path overflows (like in Windows) for large graphs. `#18638 <https://github.com/conan-io/conan/pull/18638>`_ . Docs `here <https://github.com/conan-io/docs/pull/4494>`__
+- Fix: Update remaining `audit.conan.io/<page>` links to `conan.io/audit/<page>`. `#20203 <https://github.com/conan-io/conan/pull/20203>`_
+- Fix: Fix upload with empty uploads from pattern, to make it equal to package lists behavior `#20197 <https://github.com/conan-io/conan/pull/20197>`_
+- Fix: Avoid conflict with Automake's `LINK` var when using `AutotoolsDeps` with MSVC by using `_LINK_` for linker flags. `#20192 <https://github.com/conan-io/conan/pull/20192>`_ . Docs `here <https://github.com/conan-io/docs/pull/4495>`__
+- Fix: Add support for VS 2026 in the `Premake` generator (requires Premake 5.0 beta 8). `#20189 <https://github.com/conan-io/conan/pull/20189>`_
+- Fix: Fix rpath flags from `AutotoolsDeps` being dropped by Libtool on macOS, causing missing `LC_RPATH` in executables. `#20179 <https://github.com/conan-io/conan/pull/20179>`_
+- Fix: Avoid option names shadowing internal `Options` implementation methods. `#20172 <https://github.com/conan-io/conan/pull/20172>`_ . Docs `here <https://github.com/conan-io/docs/pull/4490>`__
+- Fix: Fix deprecation warning for emcc/em++ >= 6.0.1, changing ``-sMEMORY64`` flag with the modern ``-m64`` one. `#20152 <https://github.com/conan-io/conan/pull/20152>`_
+- Fix: Avoid a corner-case in component requires when `replace_requires` creates diamond divergent requirements. `#20139 <https://github.com/conan-io/conan/pull/20139>`_
+- Fix: Fix Artifactory search patterns not matching `*@user/channel`, now requiring explicit `*/*@user/channel`. `#20136 <https://github.com/conan-io/conan/pull/20136>`_
+- Fix: Use `LINK` env-var in Windows for AutotoolsDeps ``msvc`` compiler. `#20130 <https://github.com/conan-io/conan/pull/20130>`_ . Docs `here <https://github.com/conan-io/docs/pull/4495>`__
+- Bugfix: Require `default_components`, or all existing components, in `PkgConfigDeps` when root `pkg_config_name="none"`. `#20169 <https://github.com/conan-io/conan/pull/20169>`_
+- Bugfix: Apply sorting to ``include()`` profiles settings patterns. `#20164 <https://github.com/conan-io/conan/pull/20164>`_
+- Bugfix: Raise an exception when `layout()` fails in the Docker runner. `#20154 <https://github.com/conan-io/conan/pull/20154>`_
+- Bugfix: Fix early return in `workspace complete` that could skip necessary packages. `#20150 <https://github.com/conan-io/conan/pull/20150>`_
+- Bugfix: Fix crash in `replace_requires` when the graph had an override to a replaced requirement that did not apply. `#20146 <https://github.com/conan-io/conan/pull/20146>`_
+
+2.30.0 (29-Jun-2026)
+--------------------
+
+- Feature: Add SPDX expression support in SBOM generation. `#20112 <https://github.com/conan-io/conan/pull/20112>`_
+- Feature: Add type annotations to ``LockfileAPI`` for improved IDE support. `#20104 <https://github.com/conan-io/conan/pull/20104>`_
+- Feature: Add missing favicon to Conan HTML output. `#20087 <https://github.com/conan-io/conan/pull/20087>`_
+- Feature: Implement the ``conf=~`` for the "unset" operation (alias for ``conf=!``). `#20084 <https://github.com/conan-io/conan/pull/20084>`_ . Docs `here <https://github.com/conan-io/docs/pull/4479>`__
+- Feature: Add ``ASFLAGS`` to ``AutotoolsToolchain``/``GnuToolchain``, including architecture and sysroot flags. `#20078 <https://github.com/conan-io/conan/pull/20078>`_ . Docs `here <https://github.com/conan-io/docs/pull/4481>`__
+- Feature: Add `IntelCC` support in Meson, Autotools and Premake toolchains. `#20075 <https://github.com/conan-io/conan/pull/20075>`_ . Docs `here <https://github.com/conan-io/docs/pull/4473>`__
+- Feature: Model explicitly the msys2 environments (clang64, ucrt64, etc) in ``tools.microsoft.bash:subsystem``. `#20074 <https://github.com/conan-io/conan/pull/20074>`_ . Docs `here <https://github.com/conan-io/docs/pull/4478>`__
+- Feature: Add ``build_system_requirements()`` method for installing system tools only in the build context. `#20070 <https://github.com/conan-io/conan/pull/20070>`_ . Docs `here <https://github.com/conan-io/docs/pull/4477>`__
+- Feature: Add support for ``cmake_extra_interface_libs`` and ``cmake_extra_dependencies`` properties to the ``CMakeDeps`` generator. `#20066 <https://github.com/conan-io/conan/pull/20066>`_ . Docs `here <https://github.com/conan-io/docs/pull/4472>`__
+- Feature: Support explicit architecture suffixes in system package names for native builds with ``host_package=False``. `#20047 <https://github.com/conan-io/conan/pull/20047>`_ . Docs `here <https://github.com/conan-io/docs/pull/4467>`__
+- Feature: Prevent multiple ``.libs`` or ``.package_framework`` entries in CMakeConfigDeps. `#20046 <https://github.com/conan-io/conan/pull/20046>`_
+- Feature: Add support for Bazel 9.x to BazelDeps. `#20042 <https://github.com/conan-io/conan/pull/20042>`_ . Docs `here <https://github.com/conan-io/docs/pull/4482>`__
+- Feature: Adapt ``bazel_7_lib``/``bazel_7_exe`` templates to support Bazel 9.x (:command:`conan new` command). `#20042 <https://github.com/conan-io/conan/pull/20042>`_ . Docs `here <https://github.com/conan-io/docs/pull/4482>`__
+- Feature: Allow ``[replace_requires/tool_requires]`` unset in profile composition and extension. `#20040 <https://github.com/conan-io/conan/pull/20040>`_ . Docs `here <https://github.com/conan-io/docs/pull/4474>`__
+- Feature: Add ``tools.meson.mesontoolchain:extra_variables`` configuration to ``MesonToolchain``. `#20032 <https://github.com/conan-io/conan/pull/20032>`_ . Docs `here <https://github.com/conan-io/docs/pull/4483>`__
+- Fix: Fix ``conan install <path>`` failing with absolute paths ending in a dot. `#20092 <https://github.com/conan-io/conan/pull/20092>`_
+- Fix: Relativize `cpp_info.location` for editable layouts. `#20088 <https://github.com/conan-io/conan/pull/20088>`_ . Docs `here <https://github.com/conan-io/docs/pull/4480>`__
+- Fix: Improve output messages for the `generate()` step. `#20085 <https://github.com/conan-io/conan/pull/20085>`_
+- Fix: Make ``conan config install`` maintain permission bits. `#20059 <https://github.com/conan-io/conan/pull/20059>`_
+- Fix: Improve error message for broken Jinja2 syntax in ``global.conf``. `#20056 <https://github.com/conan-io/conan/pull/20056>`_
+- Fix: Add Intel ``2026.0`` version and Intel compiler configuration check. `#20049 <https://github.com/conan-io/conan/pull/20049>`_ . Docs `here <https://github.com/conan-io/docs/pull/4476>`__
+- Fix: Set `IMPORTED_CONFIGURATIONS` property to package frameworks in CMakeConfigDeps. `#20041 <https://github.com/conan-io/conan/pull/20041>`_
+- Fix: Remove ``build`` context suffix from host requirements in CMakeConfigDeps. `#20038 <https://github.com/conan-io/conan/pull/20038>`_
+- Bugfix: Version-based policy for fixed propagation of ``transitive_headers`` trait. `#20073 <https://github.com/conan-io/conan/pull/20073>`_
+- Bugfix: Fix ``workspace info`` with ``python_requires`` and a custom user ``packages()`` method in ``conanws.py``. `#20064 <https://github.com/conan-io/conan/pull/20064>`_
+- Bugfix: Fix some cases where ``IMPORTED_IMPLIB`` was not being declared when extension was set in ``cpp_info.libs``. `#20062 <https://github.com/conan-io/conan/pull/20062>`_
+- Bugfix: Fix caching of different revisions of the same package while resolving the graph. `#20061 <https://github.com/conan-io/conan/pull/20061>`_
+- Bugfix: Fix ``replace_requires`` applying when command line arguments explicitly define a package reference. `#20048 <https://github.com/conan-io/conan/pull/20048>`_ . Docs `here <https://github.com/conan-io/docs/pull/4475>`__
+- Bugfix: Check whole git repository for dirtiness when using `revision_mode=scm`. `#18630 <https://github.com/conan-io/conan/pull/18630>`_
+
+2.29.1 (12-Jun-2026)
+--------------------
+
+- Bugfix: Handle special case where only one possible option is defined for shared. `#20082 <https://github.com/conan-io/conan/pull/20082>`_
+
 2.29.0 (28-May-2026)
 --------------------
 
